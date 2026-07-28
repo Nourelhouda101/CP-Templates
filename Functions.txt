@@ -1,0 +1,1436 @@
+set <ll> divisors;                     //* Divisors
+void divisor (ll n) {
+    for (ll i = 1; i * i <= n; i++) {
+        if (n % i == 0) {
+            divisors.insert(n / i);
+            divisors.insert(i);
+        }
+    }
+}
+
+ll divisors_count[N] = {0};           //*Sieve Divisors
+void num_div() {
+    for (int i = 1; i < N; i++) {
+        for (int j = i; j < N; j += i) {
+            divisors_count[j]++;
+        }
+    }
+}
+
+ll gcdd (ll a, ll b) {                  //* GCD
+    if (a == 0) return b;
+    if (b > a) swap(a, b);
+    return gcdd(a % b, b);
+}
+
+ll lcmm (ll a, ll b) {                 //* LCM
+    return (a * b) / gcdd(a, b); 
+}
+
+vector <ll> prime_factor;             //* Prime Factors
+map <ll, ll> m;
+void prime_factors (ll n) {
+
+    for (int i = 2; i * i <= n; i++) {
+        while (n % i == 0) {
+            n /= i;
+            prime_factor.push_back(i);
+            // m[i]++;
+        }
+    }
+
+    if (n > 1)
+    prime_factor.push_back(n);
+    // m[n]++;
+}
+
+bool is_prime (ll n) {                //* Prime check
+    if (n == 1 || n == 0)
+    return 0;
+
+    for (int i = 2; i * i <= n; i++) {
+        if (n % i == 0)
+        return 0;
+    }
+
+    return 1;
+}
+
+vector <bool> sieves(1000001, 1);       //* Sieve (Primes From 1 to n) O(n*log(log(n)))
+void sieve (ll n) {
+    sieves[0] = sieves[1] = 0;
+
+    for (ll i = 2; i * i <= n; i++) {
+        if (sieves[i]) {
+            for (ll j = i * i; j <= n; j += i)
+            sieves[j] = 0;
+        }
+    }
+}
+
+vector <bool> lin_sieve(1e6, 1);            //* Linear Sieve O(n)
+vector <ll> prime_sieve;
+void linear_sieve(ll n) {
+    lin_sieve[0] = lin_sieve[1] = 0;
+
+    for (ll i = 2; i <= n; i++) {
+        if (lin_sieve[i]) 
+        prime_sieve.push_back(i);
+
+        for (auto it : prime_sieve) {
+            if (it * i > n)
+            break;
+
+            lin_sieve[i*it] = 0;
+
+            if (i % it == 0)
+            break;
+        }
+    }
+}
+
+ll mod =1e9 + 7;
+ll powermodd (ll a, ll b) {
+    ll p = 1;
+    a %= (mod - 1);
+
+    while (b > 0) {
+        if (b % 2 == 1)
+        p = (p * a) % (mod - 1);
+        
+        a = (a * a) % (mod - 1);
+        b /= 2;
+    }
+
+    return p;
+}
+
+ll powermod (ll a, ll b) {
+    ll p = 1;
+    a %= mod;
+
+    while (b > 0) {
+        if (b % 2 == 1)
+        p = (p * a) % mod;
+        
+        a = (a * a) % mod;
+        b /= 2;
+    }
+
+    return p;
+}
+
+ll fastpower(ll base, ll exp){
+    ll res = 1;
+    while(exp){
+        if(exp & 1) 
+        res *= base;
+
+        base *= base;
+        exp >>= 1ll;
+    }
+    return res;
+}
+
+ll modpow(ll base, ll exp, ll mod) {
+    base %= mod;
+    ll res = 1;
+    while(exp){
+        if(exp & 1) 
+        res = (res * base) % mod;
+        
+        base = ((base % mod) * (base % mod)) % mod;
+        exp >>= 1ll;
+    }
+    return res;
+} // (base ^ exp) % mod
+
+ll phi(ll n) {     //* Phi, calculate coprimes less than n
+    ll res = n;
+    for (ll i = 2; i * i <= n; i++) {
+
+        if (n % i == 0) {
+           while (n % i == 0)
+           n /= i;
+   
+           res -= res / i;
+        }
+    }
+
+    if (n > 1)
+    res -= res / n;
+
+    return res;
+}
+
+ll Euler_totient (ll n) {
+    float res = n;
+    for (int i = 2; i * i <= n; i++) {
+        if (n % i == 0) {
+            while(n % i == 0)
+            n /= i;
+
+            res *= (1.0 - (1.0 / (float)i));
+        }
+    }
+    if (n > 1)
+    res *= (1.0 - (1.0 / (float)n));
+    return (ll)res;
+}
+
+const int LOG = 20;                                    //*SPARSE TABLE
+int sparse_min[N][LOG], sparse_max[N][LOG], sparse_gcd[N][LOG], a[N];
+int log_table[N];
+void build_sparse(int n) {
+    // log table
+    log_table[1] = 0;
+    for (int i = 2; i <= n; i++)
+        log_table[i] = log_table[i / 2] + 1;
+
+    // initialize base case
+    for (int i = 0; i < n; i++) {
+        sparse_min[i][0] = a[i];
+        sparse_max[i][0] = a[i];
+        sparse_gcd[i][0] = a[i];
+    }
+
+    // build
+    for (int j = 1; (1 << j) <= n; j++) {
+        for (int i = 0; i + (1 << j) <= n; i++) {
+            sparse_min[i][j] = min(sparse_min[i][j - 1], sparse_min[i + (1 << (j - 1))][j - 1]);
+            sparse_max[i][j] = max(sparse_max[i][j - 1], sparse_max[i + (1 << (j - 1))][j - 1]);
+            sparse_gcd[i][j] = __gcd(sparse_gcd[i][j - 1], sparse_gcd[i + (1 << (j - 1))][j - 1]);
+
+        }
+    }
+}
+
+int query_gcd(int l, int r) {
+    int len = r - l + 1;
+    int j = log_table[len];
+    return __gcd(sparse_gcd[l][j], sparse_gcd[r - (1 << j) + 1][j]);
+}
+
+int get_min(int l, int r) {
+    int j = log_table[r - l + 1];
+    return min(sparse_min[l][j], sparse_min[r - (1 << j) + 1][j]);
+}
+
+int get_max(int l, int r) {
+    int j = log_table[r - l + 1];
+    return max(sparse_max[l][j], sparse_max[r - (1 << j) + 1][j]);
+}
+
+ll binaryexponentiation (ll n, ll p) {
+    ll res = 1;
+                         //* Fast Power
+    while (p > 0) {
+        if (p % 2 != 0)
+        res *= n;
+
+        n *= n;
+        p /= 2;
+    }
+    return res;
+}
+
+ll mod_mul (ll a, ll b, ll mod) {
+    return ((a % mod) * (b % mod)) % mod;
+}
+
+ll mod_additon (ll a, ll b, ll mod) {
+    return ((a % mod) + (b % mod)) % mod;
+}
+
+ll mod_sub (ll a, ll b, ll mod) {
+    return ((a % mod) - (b % mod) + mod) % mod;
+}
+
+
+ll modularexponentiation (ll n, ll p, ll mod) {   
+    ll res = 1;
+                            
+    while (p > 0) {
+        if (p % 2 != 0)
+        res = (res * n) % mod;
+
+        n = mod_mul(n, n, mod);
+        p /= 2;
+    }
+    return res % mod;
+}
+
+ll extended_Euclidean_rec (ll a, ll b, ll& x, ll& y) {   
+    if (b == 0) {  // you can use it to get the inverse if m isn't prime so
+        x = 1;     //  you can't apply fermat's little theorem, consider a is the
+        y = 0;     //  inverse, b is m and (x + m % m) % m is (a^-1)
+        return a;
+    }
+
+    ll x1, y1;
+    ll d = extended_Euclidean_rec(b, a % b, x1, y1);
+    x = y1;
+    y = x1 - y1 * (a / b);
+    return d;
+}
+
+ll mod_inverse(ll b, ll m) {
+    ll x, y;
+    ll g = extended_Euclidean_rec(b, m, x, y);
+    if (g != 1)
+        return -1;  // inverse doesn't exist
+    return (x % m + m) % m;  // ensure positive result
+}
+
+
+ll mod_divide(ll a, ll b, ll m) {
+    a %= m;
+    ll inv = mod_inverse(b, m);
+    if (inv == -1) {
+        cout << "Division not defined (no inverse)\n";
+        return -1;
+    }
+    return (a * inv) % m;
+}
+
+ll mod_pow(ll base, ll exp, ll mod) {
+    ll res = 1;
+    base %= mod;
+    while (exp > 0) {
+        if (exp % 2 == 1)
+            res = res * base % mod;
+        base = base * base % mod;
+        exp /= 2;
+    }
+    return res;
+}
+
+ll mod_divide(ll a, ll b, ll m) {  // m must be prime
+    return (a % m) * mod_pow(b, m - 2, m) % m;
+}
+
+
+
+ll mod_inverse(ll a, ll m) {     //*Fermat's Little Theorem
+    return modularexponentiation(a, m - 2, m);
+    // A^ M - 1 = 1 (mod M)
+    // A^-1 = A ^ M - 2 (mod M);
+}
+
+const int N = 1e7 + 5;
+int spf[N];
+void build_spf() {
+    for (int i = 2; i < N; i++) {
+        if (spf[i] == 0) {
+            for (int j = i; j < N; j += i) {
+                if (spf[j] == 0)
+                    spf[j] = i;
+            }
+        }
+    }
+}
+*******************************************************
+ll Ceil (ll a, ll b) {   // b is a positive integer
+    return (a + b - 1) / b;
+}
+
+((ch + x) % n + n) % n  (cycle avoiding negative and out of boundires)
+
+vector<ll> get_primes(ll limit) {  // limit is sqrt(r)
+    vector <bool> is_prime(limit + 1, true);
+    is_prime[0] = is_prime[1] = false;
+
+    for (ll i = 2; i * i <= limit; i++) {
+        if (is_prime[i]) {
+            for (ll j = i * i; j <= limit; j += i)
+                is_prime[j] = false;
+        }
+    }
+
+    vector <ll> primes;
+    for (ll i = 2; i <= limit; i++) {
+        if (is_prime[i])
+            primes.push_back(i);
+    }
+    return primes;
+}
+
+void segmented_sieve(ll l, ll r) {    //* segmented_sieve (l to r)
+    if (l > r) return;
+
+    ll limit = sqrt(r) + 1;
+    vector<ll> primes = get_primes(limit);
+
+    vector<bool> is_composite(r - l + 1, false);
+
+    for (ll p : primes) {
+        ll start = max(p * p, (l + p - 1) / p * p);
+        for (ll j = start; j <= r; j += p) {
+            is_composite[j - l] = true;
+        }
+    }
+
+    if (l == 1)
+        is_composite[0] = true;
+
+    for (ll i = 0; i <= r - l; i++) {
+        if (!is_composite[i])
+            cout << (i + l) << " ";
+    }
+    cout << "\n";
+}
+
+ll count_factorial(ll n, ll p) {
+    ll res = 0;
+    while (n > 0) {
+        res += n / p;
+        n /= p;
+    }
+    return res;
+}
+
+ll cnt_dig(ll n) {
+    ll power = 1, cnt = 0;
+    for (int i = 1; i <= n; i++) {
+        if (power * 10 > n)
+        return cnt + (n - power + 1) * i;
+
+        cnt += (power * 10 - power) * i;
+        power *= 10;
+    }
+    return cnt;
+}
+
+_________________________________________________________________________
+//* Fermat Primality Testing
+ll modmul(ll a, ll b, ll p) {  //Russian Peasant Multiplication
+    ll res = 0;                // a and b up to 1e18
+    a %= p;
+
+    while (b > 0) {
+        if (b % 2 != 0)
+        res = (res + a) % p;
+
+        b /= 2;
+        a = (a * 2) % p;
+    }
+    return res % p;
+}
+
+ll modularexponentiation (ll a, ll p, ll mod) {   
+    ll res = 1;
+                            
+    while (p > 0) {
+        if (p % 2 != 0)
+        res = modmul(res, a, mod);
+
+        a = modmul(a, a, mod);
+        p /= 2;
+    }
+    return res % mod;
+}
+
+bool is_prime (ll n, ll k = 5) { //* Fermat Primality Testing
+    if (n <= 4)
+    return (n == 2 || n == 3);
+
+    for (int i = 1; i <= k; i++) {
+        ll a = 2 + rand() % (n - 3);  // 2 <= a <= n - 2
+        ll res = modularexponentiation(a, n - 1, n);
+
+        if (res != 1)
+        return 0;
+    }
+    return 1;
+}
+______________________________________________________________________________
+//* Miller_Rabin Primality Testing
+ll modmul(ll a, ll b, ll p) {  //Russian Peasant Multiplication
+    ll res = 0;                // a and b up to 1e18
+    a %= p;
+
+    while (b > 0) {
+        if (b % 2 != 0)
+        res = (res + a) % p;
+
+        b /= 2;
+        a = (a * 2) % p;
+    }
+    return res % p;
+}
+
+ll modularexponentiation (ll a, ll p, ll mod) {   
+    ll res = 1;
+                            
+    while (p > 0) {
+        if (p % 2 != 0)
+        res = modmul(res, a, mod);
+
+        a = modmul(a, a, mod);
+        p /= 2;
+    }
+    return res % mod;
+}
+
+// n is the number we wanna check, a ^ 2^s.d
+bool check_composite(ll n, ll a, ll d, ll s) {
+    ll x = modularexponentiation(a, d, n);
+
+    if (x == 1 || x == n - 1) // then it's prime
+    return 0;   // a^d = 1, a^2^s.d = -1 (+ n for % positive)
+
+    for (ll r = 1; r < s; r++) {
+        x = modmul(x, x, n); // a^2^s % d = n - 1 
+        if (x == n - 1)
+        return 0;
+    }
+
+    return 1;
+}
+
+bool miller_rabin(ll n, ll k) {
+    if (n < 4)
+    return (n == 2 || n == 3);
+
+    ll s = 0, d = n - 1;
+
+    while ((d & 1) == 0) { // d % 2 == 0
+        d >>= 1;  // d /= 2
+        s++;   // a^2^s.d = n - 1
+    }
+
+    for (int i = 0; i < k; i++) {
+        ll a = 2 + rand() % (n - 2); // 2 <= a <= n - 2
+
+        if (check_composite(n, a, d, s))
+        return 0;
+    }
+    return 1;
+}
+
+ll binaryToDecimal(string s) {
+    ll decimal = 0;
+    ll base = 1;
+
+    for (int i = s.size() - 1; i >= 0; i--) {
+        if (s[i] == '1')
+        decimal += base;
+        
+        base *= 2;
+    }
+    return decimal;
+}
+
+
+Kadane's Algorithm for max sub array:
+cur = max(a[i], cur + a[i])
+max_sub_array = max(cur, max_sub_array)
+______________________________________________________________________________stack <int> st;
+bool hascycle = false;
+void dfs(int node, vector<vector<int>>& adj, vector<int>& visited, stack<int>& st) {
+    visited[node] = 1; // 1 = visiting
+
+    for (int neighbor : adj[node]) {
+        if (visited[neighbor] == 0)
+            dfs(neighbor, adj, visited, st);
+        else if (visited[neighbor] == 1)
+            hascycle = true; // back edge → cycle
+    }
+
+    visited[node] = 2; // 2 = visited
+    st.push(node);
+}
+
+bool check_sort () {
+    string s;
+    vector <vector<int>> adj(5);
+    vector <int> visted(5, 0);
+    int n = 5;
+    while(n--) {
+        cin >> s;
+        int u = s[0] - 'A', v = s[2] - 'A';
+        if (s[1] == '>') // u > v, from smallest to bigger v --> u
+        adj[v].push_back(u);
+
+        else
+        adj[u].push_back(v);
+    }
+
+    for (int i = 0; i < 5; i++) {
+        if(visted[i] == 0)
+        dfs(i, adj, visted, st);
+    }
+    if(hascycle)
+    return 0;
+
+    return 1;
+}
+--------------------------------------------------------------------------
+void print_prime_factors(int n) {
+    while (n > 1) {
+        cout << " x " << spf[n];
+        n /= spf[n];
+    }
+    cout << nl;
+}
+
+ll const N = 1e5 + 5;
+ll factor_count[N];  
+void prime_factors () {
+    for (int i = 2; i < N; i++) {
+        if (factor_count[i] == 0) {
+            for (int j = i; j < N; j += i) {
+                ll k = j;
+                while (k % i == 0) {
+                    factor_count[j]++;
+                    k /= i;
+                }
+            }
+        }
+    }
+}
+
+ll freqq[17][N] = {};
+void freq() {
+    for (int x = 1; x <= 16; x++) {
+        for (int i = 1; i < N; i++) {
+            freqq[x][i] = freqq[x][i - 1] + (factor_count[i] == x);
+        }
+    }
+}
+
+_________________________________________________________________________
+// void number(ll n) { 
+//     if(n % 2 == 0)
+//     cout << n / 2 << nl;
+
+//     else
+//     cout << 1 + (n - 3) / 2 << nl;
+// }
+
+
+// bool palindrom(string s) {
+//     ll n = s.size();
+//     for (int i = 0; i < n / 2; i++) { 
+//         if (s[i] != s[n - 1 - i])
+//         return false;
+//     }
+//     return true;
+// }
+
+
+// int first = ((a + c - 1) / c) * c;
+// int last = (b / c) * c;
+
+// if (first > b) {
+//     cout << 0;
+// } else {
+//     int cnt = (last - first) / c + 1;
+//     int sum = cnt * (first + last) / 2;
+//     cout << sum;
+// }
+
+// int binaryToDecimal(string bin) {
+//     int res = 0;
+//     for (char c : bin) {
+//         res = res * 2 + (c - '0');
+//     }
+//     return res;
+// }
+// من بايناري لديسيمال
+// ----------------------------------------
+// string decimalToBinary(int n) {
+//     if (n == 0) return "0"; // لو الرقم 0
+
+//     string binary = "";
+//     while (n > 0) {
+//         binary = char((n % 2) + '0') + binary;
+//         n /= 2;
+//     }
+//     return binary;
+// } من ديسيمال لبايناري ك سترينج
+
+
+// bool is_prime(ll n){
+//     if(n == 2) 
+//     return 1;
+
+//     if(n == 0 || n == 1 || n % 2 == 0) 
+//     return 0;
+
+//     for(ll i = 3; i * i <= n; i+= 2){
+//         if(n % i == 0) 
+//         return 0;
+//     }
+//     return 1;
+// }
+
+// vector<pair<ll,ll>> Prime_factors(ll n) {
+//     vector<pair<ll,ll>> res;
+//     for(ll i = 2; i * i <= n; i++){
+//         ll c = 0;
+//         if(n % i == 0){
+//             while(n % i == 0) 
+//             n /= i, c++; 
+            
+//             res.push_back({i, c});
+//         }
+//     }
+//     if(n > 1) 
+//     res.push_back({n, 1});
+
+//     return res;
+// }
+
+// vector<ll> fact(MAX);
+// const int mod = 998244353;
+// void precalc_factorial(){
+//     fact[0] = 1;
+//     for(int i = 1; i < MAX; i++){
+//         fact[i] = ((fact[i - 1] % mod) * (i % mod)) % mod;
+//     }
+// }
+
+    // int l = 0, r = v.size() - 1;
+    // int target = 3;
+
+    // while(l <= r) {
+    //     int mid = (l + r)/ 2; //left + ( right - left ) / 2
+
+    //     if(v[mid] == target) {
+    //         cout << "Exist";
+    //         return;
+    //     }
+
+    //     else if (v[mid] < target)
+    //     l = mid + 1;
+
+    //     else
+    //     r = mid - 1;
+    // }
+    // cout << "Not exist";
+
+    //     while (l <= r) {                           
+    //         int mid = (l + r) / 2;
+
+    //         if (v[mid] >= L) {
+    //             idx_l = mid;
+    //             r = mid - 1;
+    //         }
+
+    //         else
+    //         l = mid + 1;
+    //     }
+    //     cout << v[idx_l]
+
+    //     while (l <= r) {     
+    //         int mid = (l + r) / 2;
+
+    //         if (v[mid] > R) {
+    //             idx_r = mid;
+    //             r = mid - 1;
+    //         }
+
+    //         else
+    //         l = mid + 1;
+    //     }
+    //     cout << v[idx_r];
+
+
+        vector<vector<int>> a(n, vector<int>(m));
+    vector<vector<int>> prefix(n, vector<int>(m));
+
+    for(int i = 0; i < n; ++i) {
+    for(int j = 0; j < m; ++j) {
+        prefix[i][j] = a[i][j];
+        if(i > 0) prefix[i][j] += prefix[i - 1][j];
+        if(j > 0) prefix[i][j] += prefix[i][j - 1];
+        if(i > 0 && j > 0) prefix[i][j] -= prefix[i - 1][j - 1];
+    }
+
+    //from(x1, y1) to (x2, y2)
+    int res = prefix[x2][y2];
+    if (x1 > 0) res -= prefix[x1 - 1][y2];
+    if (y1 > 0) res -= prefix[x2][y1 - 1];
+    if (x1 > 0 && y1 > 0) res += prefix[x1 - 1][y1 - 1];
+    cout << res;
+
+    // from(0, 0)
+    cout << pref[i][j];
+  }
+
+    vector<vector<int>> a(n, vector<int>(m));
+    vector<vector<vector<int>>> freq(n, vector<vector<int>>(m, vector<int>(1000 + 1, 0)));
+
+    for(int i = 0; i < n; ++i) {
+        for(int j = 0; j < m; ++j) {
+            int val = a[i][j];
+
+            // carry over previous frequencies
+            if(i > 0) 
+                for(int v = 1; v <= MAX_VAL; ++v)
+                    freq[i][j][v] += freq[i-1][j][v];
+
+            if(j > 0)
+                for(int v = 1; v <= MAX_VAL; ++v)
+                    freq[i][j][v] += freq[i][j-1][v];
+
+            if(i > 0 && j > 0)
+                for(int v = 1; v <= MAX_VAL; ++v)
+                    freq[i][j][v] -= freq[i-1][j-1][v];
+
+            // add current value
+            freq[i][j][val]++;
+        }
+    }
+
+    //from(x1, y1) to (x2, y2)
+    int ans = freq[x2][y2][val];
+    if (x1 > 0) ans -= freq[x1 - 1][y2][val];
+    if (y1 > 0) ans -= freq[x2][y1 - 1][val];
+    if (x1 > 0 && y1 > 0) ans += freq[x1 - 1][y1 - 1][val];
+    cout << ans;
+
+    cout << freq[i][j][x]; //--> freq of x from 0,0 to i, j
+
+    vector<int> a(n), prefix(n);
+    prefix[0] = a[0];
+    for(int i = 1; i < n; ++i)
+    prefix[i] = prefix[i - 1] + a[i];
+
+    vector<vector<int>> freq(n, vector<int>(MAX_VAL + 1, 0));
+    freq[0][a[0]] = 1;
+    for (int i = 1; i < n; ++i) {
+        for (int v = 1; v <= MAX_VAL; ++v)
+        freq[i][v] = freq[i - 1][v];
+
+        freq[i][a[i]]++;
+    }
+
+    cout << pref[i]; //from 0 to i
+    cout << pref[r] - pref[l - 1];
+
+    cout << freq[i][val]; //from 0 to i
+    cout << freq[r][val] - freq[l - 1][val];
+
+    _________________________________________________________________________
+
+    2D Prefix
+    vector <vector <ll>> pref(n + 1, vector <ll> (n + 1, 0));
+
+    for (int i = 1; i <= n; i++) {
+        for (int j = 1; j <= n; j++)
+        pref[i][j] = 1 + pref[i - 1][j] + pref[i][j - 1] - pref[i - 1][j - 1];
+    }
+
+    while (q--) {
+        ll x1, y1, x2, y2;
+        cin >> x1 >> y1 >> x2 >> y2;
+        int sum = pref[x2][y2] - pref[x1 - 1][y2] - pref[x2][y1 - 1] + pref[x1 - 1][y1 - 1];
+        cout << sum << nl;
+    }
+_________________________________________________________________________
+ll gcd(ll a, ll b) {
+    while (b != 0) {
+        long long t = a % b;
+        a = b;
+        b = t;
+    }
+    return a;
+}
+
+    double x;
+    cin >> x;
+
+    ll denominator = 1;
+
+    while (x != floor(x)) {
+        x *= 10;
+        denominator *= 10;
+    }
+
+    ll numerator = (lll)x;
+
+    ll g = gcd(numerator, denominator);
+
+    numerator /= g;
+    denominator /= g;
+
+    cout << numerator << "/" << denominator;
+    _________________________________________________________________________
+ll gcd(ll a, ll b) {
+    while (b) {
+        long long t = a % b;
+        a = b;
+        b = t;
+    }
+    return a;
+}
+
+    string s;
+    cin >> s;
+
+    ll numerator = 0, denominator = 1;
+
+    int pos = s.find('.');
+
+    if (pos == -1) {
+        numerator = stoll(s);
+    } 
+
+    else {
+        string integerPart = s.substr(0, pos);
+        string decimalPart = s.substr(pos + 1);
+
+        string full = integerPart + decimalPart;
+
+        numerator = stoll(full);
+
+        for (int i = 0; i < decimalPart.size(); i++)
+            denominator *= 10;
+    }
+
+
+    ll g = gcd(abs(numerator), denominator);
+
+    numerator /= g;
+    denominator /= g;
+
+    cout << numerator << "/" << denominator << nl;
+
+__________________________________________INTERACTIVE______________________
+
+ll ask(int i, int j) {
+    cout << "! " << i << sp << j << nl;
+    cout.flush();
+    ll n;
+    cin >> n;
+    return n;
+}
+_________________________________________________________________________
+GRAPH
+-------
+
+--------------------------------------------BFS------------------------------------
+vector<vector<int>> adj; // holdes the nodes and their adjacency
+void graph_rep(int n, int m) {
+    adj.resize(n + 1);
+    int x, y;
+    for (int i = 1; i <= m; i++) {
+        cin >> x >> y; // node, the adjacency one
+        adj[x].push_back(y);
+        adj[y].push_back(x);5
+    }
+}
+
+void BFS(int start_node, int n) {
+    vector <bool> vis(n + 1, 0);
+    queue <int> bfs;
+    bfs.push(start_node);
+    vis[start_node] = 1    while (!bfs.empty()) {
+        int parent = bfs.front();
+        bfs.pop();
+        cout << parent << sp;
+
+        for (int i : adj[parent]) {
+            if (vis[i] == 0) {
+                vis[i] = 1;
+                bfs.push(i);
+            }
+        }
+    }
+}
+
+--------------------------------------------DFS------------------------------------
+vector<bool>vis;
+void DFS(int node) {
+    vis[node] = 1;
+    cout << node << sp;
+
+    for(int i = 0; i < adj[node].size(); i++) {
+        if(!vis[adj[node][i]])
+        DFS(adj[node][i]);
+    }
+}
+
+-----------------------------Dijkstra----------------------------------
+int n, m; // nodes, edges.
+vector<vector<pair<ll,ll>>> adj; // holdes the nodes, their adjacency and the cost
+vector<ll>dis;
+vector<ll>pre;
+vector<ll>path;
+void graph_rep(int n, int m) {
+    adj.resize(n + 1);
+    int x, y, c;
+    for (int i = 1; i <= m; i++) {
+        cin >> x >> y >> c; // node, the adjacency one, cost
+        adj[x].push_back({y, c});
+    }
+}
+
+void Dijkstra(int start, int t) {
+    dis.assign(n + 1, LLONG_MAX);
+    pre.assign(n + 1, -1);
+    priority_queue<pair<ll, ll>, vector<pair<ll,ll>>, greater<pair<ll,ll>>>pq;
+    //stores the cost of each node and the node itself in ascending order.
+    pq.push({0, start});
+    dis[start] = 0;
+    pre[start] = start;
+
+    while(!pq.empty()) {
+        auto [a, b] = pq.top(); // cost, node
+        pq.pop();
+
+        if(dis[b] < a)  // if it's not the best path so far, don't walk through it.
+        continue;
+
+        for(auto [x, y] : adj[b]) {  // node and its cost.
+            if(dis[b] + y < dis[x]) {  
+            // if cost of the parent node + cost of the path to node x is less than the 
+            //distance was calculatd for node x, then update x's cost with the better cost.
+                dis[x] = dis[b] + y;
+                pq.push({dis[x], x});
+                pre[x] = b;
+            }
+        }
+    }
+
+    //find the path from start to t
+    if(dis[t] == LLONG_MAX)
+    return;
+
+    ll cur = t;
+    while(cur != start) {
+        path.push_back(cur);
+        cur = pre[cur]; // cur = the previous node of cur till we reach the start node.
+    }
+
+    path.push_back(start);
+    reverse(all(path));
+}
+-----------------------------------------Floyed Warshall-------------------------------------
+vector<vector<ll>>dis(n + 1, vector<ll>(n + 1, LLONG_MAX));
+    for(int i = 1; i <= n; i++)
+    dis[i][i] = 0;
+ 
+    for(int i = 1; i <= m; i++) {
+        cin >> x >> y >> c;
+        dis[x][y] = dis[y][x] = min(dis[y][x], c);
+    }
+ 
+    for(int k = 1; k <= n; k++) {
+        for(int i = 1; i <= n; i++) {
+            for(int j = 1; j <= n; j++)
+            if(dis[i][k] < LLONG_MAX && dis[k][j] < LLONG_MAX)
+            dis[i][j] = min(dis[i][j], dis[i][k] + dis[k][j]);
+        }
+    }
+    -----------------------------------------Bellman Ford-------------------------------------
+    ll n, m;
+    cin >> n >> m;
+ vector<vector<pair<ll, ll>>> adj(n); // holdes the nodes, their adjacency and the cost
+        for (int i = 0; i < m; i++) {
+            int x, y, c;
+            cin >> x >> y >> c; // node, the adjacency one, cost
+            adj[x].push_back({y, c});
+        }
+
+        vector<ll> dis(n, LLONG_MAX);
+        dis[s] = 0;
+        for (int i = 1; i <= n - 1; i++) {  // n - 1 rounds
+            for (int j = 0; j < n; j++) {  // iterate over all nodes
+                if (dis[j] == LLONG_MAX)
+                    continue;
+
+                for (auto e : adj[j]) {  // check all neighbours (all related edges to adj[j] node)
+                    ll v = e.first;
+                    ll cost = e.second;
+                    dis[v] = min(dis[v], dis[j] + cost);
+                }
+            }
+        }
+
+        // Check all negative cycles
+        queue<int>infinity; // to use in bfs
+        vector<bool> is_inf(n, false); // to not push the same node twice
+        for (int j = 0; j < n; j++) {
+            if (dis[j] == LLONG_MAX)
+                continue;
+
+            for (auto e : adj[j]) {
+                ll v = e.first;
+                ll cost = e.second;
+                if (dis[j] + cost < dis[v] && !is_inf[v]) { // if cost still can be reduced then it's a negative cycle
+                    infinity.push(v); // push the nodes causing the negative cycle to use them in bfs
+                    is_inf[v] = 1;
+                }
+            }
+        }
+
+        // we apply bfs on the nodes causing negative cycles because all nodes related (neighbours) are now affected too
+        while (!infinity.empty()) {
+            int u = infinity.front();
+            infinity.pop();
+            for (auto &edge : adj[u]) {
+                int v = edge.first;
+
+                if (!is_inf[v]) {
+                    is_inf[v] = true;
+                    infinity.push(v);
+                }
+            }
+        }
+
+        while (q--) {
+            cin >> x;
+            if (dis[x] == LLONG_MAX)
+                cout << "Impossible" << nl;
+
+            else if (is_inf[x])
+                cout << "-Infinity" << nl;
+
+            else
+                cout << dis[x] << nl;
+        }
+
+_________________________________DSU________________________________________
+vector<ll>parent, sz;
+    parent.resize(n + 1);
+    sz.assign(n + 1, 1);
+
+    for(int i = 0; i <= n; i++)
+    parent[i] = i;
+
+// Paths Comperession
+int find_Uparent(int node) {
+    if (node == parent[node])
+    return node;
+
+    return parent[node] = find_Uparent(parent[node]);
+}
+
+void union_size(int u, int v) {
+    int Uparent_u = find_Uparent(u);
+    int Uparent_v = find_Uparent(v);
+
+    if(Uparent_u == Uparent_v)
+    return;
+
+    if(sz[Uparent_u] < sz[Uparent_v]) {
+        parent[Uparent_u] = Uparent_v;
+        sz[Uparent_v] += sz[Uparent_u];
+    }
+
+    else {
+        parent[Uparent_v] = Uparent_u;
+        sz[Uparent_u] += sz[Uparent_v];
+    }
+
+}
+
+void union_rank(int u, int v) {
+    int Uparent_u = find_Uparent(u);
+    int Uparent_v = find_Uparent(v);
+
+    if(Uparent_u == Uparent_v)
+    return;
+
+    if(rankk[Uparent_u] < rankk[Uparent_v])
+    parent[Uparent_u] = Uparent_v;
+
+    else if(rankk[Uparent_u] > rankk[Uparent_v])
+    parent[Uparent_v] = Uparent_u;
+
+    else {
+        parent[Uparent_v] = Uparent_u;
+        rankk[Uparent_u]++;
+    }
+}
+________________________________Prim Algorithm____________________
+vector<vector<pair<ll, ll>>>adj;
+ll spanning_tree_Prim(ll n, ll start_node) {
+    priority_queue<pair<ll, ll>, vector<pair<ll, ll>>, greater<pair<ll, ll>>>pq;
+    //if you want to store the mst, make the pair a tuple instead;
+    vector<ll>vis(n + 1, 0);
+    vector<pair<ll, ll>>mst;
+
+    ll sum = 0;
+    pq.push({0, start_node});  // weight, node, parent_node (if it's a tuple)
+    // (0, start_node, -1) in case of a tuple
+
+    while(!pq.empty()) {
+        auto [w, node] = pq.top();
+        pq.pop();
+
+
+        if(vis[node])
+        continue;
+
+        vis[node] = 1;
+        sum += w;
+
+        // if (parent != -1) {
+        //     mst.push_back({parent, node});
+        // }
+
+        for(auto it : adj[node]) {
+            ll we = it.second;
+            ll neighbor = it.first;
+
+            if(!vis[neighbor])
+            pq.push({we, neighbor}); // {we, neighbour, node} in case of a tuple
+        }
+    }
+    return sum;
+}
+___________________________________Kruskal___________________________________
+vector<ll>parent, sz;
+    parent.resize(n + 1);
+    sz.assign(n + 1, 1);
+
+    for(int i = 0; i <= n; i++)
+    parent[i] = i;
+
+// Paths Comperession
+int find_Uparent(int node) {
+    if (node == parent[node])
+    return node;
+
+    return parent[node] = find_Uparent(parent[node]);
+}
+
+void union_size(int u, int v) {
+    int Uparent_u = find_Uparent(u);
+    int Uparent_v = find_Uparent(v);
+
+    if(Uparent_u == Uparent_v)
+    return;
+
+    if(sz[Uparent_u] < sz[Uparent_v]) {
+        parent[Uparent_u] = Uparent_v;
+        sz[Uparent_v] += sz[Uparent_u];
+    }
+
+    else {
+        parent[Uparent_v] = Uparent_u;
+        sz[Uparent_u] += sz[Uparent_v];
+    }
+
+}
+vector<tuple<ll, ll, ll>>edges;
+ll spanning_tree_Kruskal(ll n) {
+    sort(edges.begin(), edges.end());
+    vector<pair<ll, ll>>mst;
+
+    ll sum = 0, cnt = 0;
+    for(auto[w, u, v] : edges) {
+        if(find_Uparent(u) != find_Uparent(v)) {
+            union_size(u, v);
+            sum += w;
+            cnt++;
+            mst.push_back({u, v});
+
+            if(cnt == n - 1)
+            break;
+        }
+    }
+
+    return sum;
+}
+____________________________________Segment Tree________________________________
+vector<ll>segtree;
+vector<ll>v;
+void build_seg_tree(int n) {
+    for(int i = 0; i < n; i++)
+    segtree[n + i] = v[i];
+
+    for(int i = n - 1; i >= 1; i--)
+    segtree[i] = segtree[i * 2] + segtree[i * 2 + 1];
+}
+
+void update_ite(int n, int idx, int val) {
+    segtree[n + idx] = val;
+
+    for(int i = (n + idx) / 2; i >= 1; i /=2)
+    segtree[i] = segtree[i * 2] + segtree[i * 2 + 1];
+}
+
+void update_rec(int root, int node_l, int k, int l, int r, int val) {
+    if(l <= node_l && r >= node_r) {
+        // that means it's a leaf, the lowest node in the tree, the one that in the inintial array.
+        segtree[root] = val;
+        return;
+    }
+
+    if(r < node_l || l > node_r)
+    return;
+
+    int last_node_left = (node_l + node_r) / 2;
+    update_rec(2 * root, node_l, last_node_left, l, r, val);
+    update_rec(2 * root + 1, last_node_left + 1, node_r, l, r, val);
+
+    segtree[root] = segtree[2 * root] + segtree[2 * root + 1];
+}
+
+
+ll sum(int root, int node_l, int node_r, int l, int r) {
+    if(l <= node_l && r >= node_r)
+    return segtree[root];
+
+    if(r < node_l || l > node_r)
+    return 0;
+
+    int last_node_left = (node_l + node_r) / 2;
+    return sum(2 * root, node_l, last_node_left, l, r) +
+           sum(2 * root + 1, last_node_left + 1, node_r, l, r);
+}
+
+   while(__builtin_popcountll(n) != 1) { // 100 1000 10000
+      n++;
+      v.push_back(0);
+   }
+ 
+   segtree.resize(n * 2);
+   build_seg_tree(n);
+   
+   _________________________________________________________________________struct Node {
+    ll sum;
+    Node() { // default val(one that won't affect the answer -> 0 for sum, max for min, ...)
+        sum = 0;  //? Change
+    }
+ 
+    Node(ll x) {
+        sum = x;
+    }
+ 
+    void change(ll x) { // add, min, max, replace, ... Related to set
+        sum = x;   //? Change
+    }
+};
+ 
+struct SegTree {
+    int treeSize;
+    vector<Node>segData;
+ 
+    SegTree(int n) {
+       treeSize = 1;
+        while(treeSize < n) 
+        treeSize *= 2;
+ 
+        segData.assign(2 * treeSize, Node());
+    }
+ 
+    Node merge(Node &left, Node &right) {
+        Node parent = Node(); // default
+        parent.sum = left.sum + right.sum; //? Change
+        return parent;
+    }
+ 
+    void init(vector<ll> &arr, int cur, int lx, int rx) {
+        if(rx - lx == 1) {
+            if(lx < arr.size())
+            segData[cur] = Node(arr[lx]);
+
+            return; 
+        }
+ 
+        int mid = (rx + lx) / 2;
+        init(arr, 2 * cur + 1, lx, mid);
+        init(arr, 2 * cur + 2, mid, rx);
+ 
+        segData[cur] = merge(segData[2 * cur + 1], segData[2 * cur + 2]);
+    }
+ 
+    void init(vector<ll> & arr) {
+        init(arr, 0, 0, treeSize);
+    }
+ 
+    void set(int idx, ll val, int ni, int lx, int rx) {
+        if(rx - lx == 1) { // leaf
+            segData[ni].change(val);
+            return;
+        }
+ 
+        int mid = (rx + lx) / 2;
+ 
+        if(idx < mid)
+        set(idx, val, 2 * ni + 1, lx, mid);
+ 
+        else
+        set(idx, val, 2 * ni + 2, mid, rx);
+ 
+        segData[ni] = merge(segData[2 * ni + 1], segData[2 * ni + 2]);
+    }
+ 
+    void set(int idx, ll val) {
+        set(idx, val, 0, 0, treeSize);
+    }
+ 
+    //l, r -> the range I'm asking about, lx, rx the range THAT node covers.
+    Node get(int l, int r, int ni, int lx, int rx) {
+        if(lx >= l && rx <= r) // the node is fully inside the range I'm asking about.
+        return segData[ni];
+ 
+        if(lx >= r || rx <= l) //the node is completely outside the range
+        return Node(); //return neutral element (sum = 0).
+ 
+        int mid = (lx + rx) / 2;
+        Node left = get(l, r, 2 * ni + 1, lx, mid);
+        Node right = get(l, r, ni * 2 + 2, mid, rx);
+ 
+        return merge(left, right);
+    }
+ 
+    ll get(int l, int r) {
+        return get(l, r, 0, 0, treeSize).sum;
+    }
+};
+_________________________________________________________________________
+vector<int>ans; // stores the nodes i changed.
+void dfsFlip(int u, int p, int even, int odd, int depth) {
+    int cur = (depth % 2? odd : even);
+    int act = init[u] ^ cur; // if cur == 0 (no flips before this level) it stays the same
+    if(act != goal[u]) {
+        ans.push_back(u); // you did a flip
+        if(depth % 2)
+        odd ^=1;
+
+        else
+        even ^= 1;
+    }
+
+    for(auto v : adj[u]) {
+        if(v != p)
+        dfsFlip(v, u, even, odd, depth + 1);
+    }
+}
+
+________________________________________DSU______________
+struct DSU {
+    // par[u] < 0  ->  root, component size = -par[u]
+    // par[u] >= 0 ->  non-root, parent = par[u]
+    int par[N], ncmp;
+
+    void init(int n) {
+        memset(par, -1, n * sizeof par[0]); // -1 = root of size 1
+        ncmp = n;
+    }
+
+    int find(int u) {
+        return par[u] < 0 ? u : par[u] = find(par[u]); // path compression
+    }
+
+    // s = small, b = big (by convention - swap if inconsistent).
+    // Returns false if s and b are already in the same component.
+    bool join(int s, int b) {
+        s = find(s); b = find(b);
+        if (s == b) return false;
+        if (par[b] > par[s]) swap(s, b); // par more negative = bigger; ensure b is bigger
+        par[b] += par[s];                // merge sizes (both negative -> sum more negative)
+        par[s] = b;                      // s becomes child of b
+        ncmp--;
+        return true;
+    }
+};
+
+_______________________________________________Forward start____________________
